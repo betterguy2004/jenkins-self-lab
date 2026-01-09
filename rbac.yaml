@@ -1,0 +1,23 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: jenkins-agent-role
+  namespace: jenkins
+rules:
+- apiGroups: [""]
+  resources: ["pods", "pods/log", "services"]
+  verbs: ["create", "delete", "get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: jenkins-agent-binding
+  namespace: jenkins
+subjects:
+- kind: ServiceAccount
+  name: jenkins-agent
+  namespace: jenkins
+roleRef:
+  kind: Role
+  name: jenkins-agent-role
+  apiGroup: rbac.authorization.k8s.io
