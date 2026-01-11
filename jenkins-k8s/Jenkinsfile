@@ -1,0 +1,49 @@
+pipeline {
+  agent {
+    kubernetes {
+      // Defines the pod that will be spun up as the agent
+      yaml '''
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          labels:
+            some-label: some-label-value
+        spec:
+          # Use the service account that has permissions
+          serviceAccountName: jenkins-agent
+          containers:
+          - name: shell
+            image: ubuntu:20.04
+            command:
+            - sleep
+            - infinity
+          - name: kubectl
+            image: bitnami/kubectl:latest
+            command:
+            - sleep
+            - infinity
+      '''
+    }
+  }
+  stages {
+    stage('Hello World') {
+      steps {
+        container('shell') {
+          sh 'echo "Hello World! I am running inside a Kubernetes Pod agent!"'
+        }
+      }
+    }
+    stage('Deploy') {
+      steps {
+        container('kubectl') {
+          // Verify access
+          sh 'kubectl get nodes'
+          
+          // Deploy a simple app (optional demo)
+          sh 'kubectl run nginx-demo --image=nginx --restart=Never || echo "Already exists"'
+          sh 'kubectl get pods'
+        }
+      }
+    }
+  }
+}
