@@ -3,9 +3,9 @@
 
 backstage:
   image:
-    # Using Roadie's community image for easier setup
-    registry: docker.io
-    repository: roadiehq/community-backstage-image
+    # Using official Backstage image
+    registry: ghcr.io
+    repository: backstage/backstage
     tag: latest
     pullPolicy: IfNotPresent
 
@@ -20,7 +20,6 @@ backstage:
       value: "https://kubernetes.default.svc"
     - name: ARGOCD_URL
       value: "https://argocd-server.argocd.svc"
-  
   # Resource limits for dev
   resources:
     limits:
@@ -44,12 +43,25 @@ backstage:
       listen:
         port: 7007
       database:
-        client: better-sqlite3
-        connection: ':memory:'
-    
+        client: pg
+        connection:
+          host: backstage-postgresql
+          port: 5432
+          user: ${POSTGRES_USER}
+          password: ${POSTGRES_PASSWORD}
+          database: backstage
+        knexConfig:
+          pool:
+            min: 0
+            max: 5
+            acquireTimeoutMillis: 60000
+
     catalog:
       rules:
         - allow: [Component, System, API, Resource, Location, Template, Group, User]
+    
+  
+  
 
 # Ingress configuration (optional)
 ingress:
@@ -64,12 +76,22 @@ ingress:
 
 # PostgreSQL (disabled - using sqlite for dev)
 postgresql:
-  enabled: false
+  enabled: true
+  auth:
+    username: backstage
+    password: backstage-password
+    database: backstage
+  # Disable persistence for dev/demo to avoid PVC issues
+  primary:
+    persistence:
+      enabled: false
+  persistence:
+    enabled: false
 
 # Service configuration
 service:
-  type: ClusterIP
-  port: 7007
+  type: NodePort
+  # port: 7007 # Removed as it causes schema validation error
 ---
 # Secret for Backstage (create this before installing)
 # kubectl create secret generic backstage-secrets \

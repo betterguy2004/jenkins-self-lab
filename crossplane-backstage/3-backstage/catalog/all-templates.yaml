@@ -1,0 +1,9 @@
+apiVersion: backstage.io/v1alpha1
+kind: Location
+metadata:
+  name: s3-bucket-templates
+  description: AWS S3 Bucket Templates
+spec:
+  type: url
+  targets:
+    - https://github.com/betterguy2004/jenkins-self-lab/blob/main/crossplane-backstage/3-backstage/templates/s3-bucket-template/template.yaml
