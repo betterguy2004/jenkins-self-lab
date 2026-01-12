@@ -1,0 +1,111 @@
+# XRD for VPC Network - Crossplane v2 API
+---
+apiVersion: apiextensions.crossplane.io/v2
+kind: CompositeResourceDefinition
+metadata:
+  name: appnetworks.network.example.com
+  labels:
+    crossplane.io/xrd: appnetworks.network.example.com
+    backstage.io/template: "true"
+spec:
+  scope: Namespaced
+  group: network.example.com
+  names:
+    kind: AppNetwork
+    plural: appnetworks
+  versions:
+    - name: v1alpha1
+      served: true
+      referenceable: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              description: "Configuration for VPC Network"
+              properties:
+                networkName:
+                  type: string
+                  description: "Name of the network"
+                  minLength: 1
+                  maxLength: 64
+                region:
+                  type: string
+                  description: "AWS Region"
+                  enum:
+                    - us-east-1
+                    - us-west-2
+                    - eu-west-1
+                    - ap-southeast-1
+                  default: us-east-1
+                vpcCidr:
+                  type: string
+                  description: "CIDR block for VPC"
+                  default: "10.0.0.0/16"
+                enableDnsHostnames:
+                  type: boolean
+                  description: "Enable DNS hostnames"
+                  default: true
+                enableDnsSupport:
+                  type: boolean
+                  description: "Enable DNS support"
+                  default: true
+                numberOfAZs:
+                  type: integer
+                  description: "Number of Availability Zones"
+                  enum:
+                    - 1
+                    - 2
+                    - 3
+                  default: 2
+                createNatGateway:
+                  type: boolean
+                  description: "Create NAT Gateway for private subnets"
+                  default: false
+                crossplane:
+                  type: object
+                  description: "Crossplane machinery"
+                  x-kubernetes-preserve-unknown-fields: true
+              required:
+                - networkName
+            status:
+              type: object
+              properties:
+                vpcId:
+                  type: string
+                  description: "VPC ID"
+                publicSubnetIds:
+                  type: array
+                  items:
+                    type: string
+                  description: "List of public subnet IDs"
+                privateSubnetIds:
+                  type: array
+                  items:
+                    type: string
+                  description: "List of private subnet IDs"
+                state:
+                  type: string
+                  description: "Current state"
+                conditions:
+                  type: array
+                  items:
+                    type: object
+                    x-kubernetes-preserve-unknown-fields: true
+      additionalPrinterColumns:
+        - name: Network
+          type: string
+          jsonPath: .spec.networkName
+        - name: CIDR
+          type: string
+          jsonPath: .spec.vpcCidr
+        - name: Region
+          type: string
+          jsonPath: .spec.region
+        - name: Ready
+          type: string
+          jsonPath: .status.conditions[?(@.type=='Ready')].status
+        - name: Age
+          type: date
+          jsonPath: .metadata.creationTimestamp

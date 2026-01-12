@@ -1,0 +1,35 @@
+# AWS ProviderConfig - sử dụng credentials từ Secret
+---
+apiVersion: aws.upbound.io/v1beta1
+kind: ProviderConfig
+metadata:
+  name: default
+spec:
+  credentials:
+    source: Secret
+    secretRef:
+      namespace: crossplane-system
+      name: aws-creds
+      key: credentials
+---
+# Alternative: Create this secret format
+# The secret should contain AWS credentials in INI format:
+#
+# [default]
+# aws_access_key_id = YOUR_ACCESS_KEY
+# aws_secret_access_key = YOUR_SECRET_KEY
+#
+# Create with:
+# cat <<EOF | kubectl apply -f -
+# apiVersion: v1
+# kind: Secret
+# metadata:
+#   name: aws-creds
+#   namespace: crossplane-system
+# type: Opaque
+# stringData:
+#   credentials: |
+#     [default]
+#     aws_access_key_id = YOUR_ACCESS_KEY
+#     aws_secret_access_key = YOUR_SECRET_KEY
+# EOF

@@ -1,0 +1,77 @@
+# Backstage Helm Values for Kubernetes Deployment
+# Use this with: helm install backstage backstage/backstage -f backstage-helm-values.yaml
+
+backstage:
+  image:
+    # Using Roadie's community image for easier setup
+    registry: docker.io
+    repository: roadiehq/community-backstage-image
+    tag: latest
+    pullPolicy: IfNotPresent
+
+  # Extra environment variables
+  extraEnvVars:
+    - name: GITHUB_TOKEN
+      valueFrom:
+        secretKeyRef:
+          name: backstage-secrets
+          key: github-token
+    - name: K8S_CLUSTER_URL
+      value: "https://kubernetes.default.svc"
+    - name: ARGOCD_URL
+      value: "https://argocd-server.argocd.svc"
+  
+  # Resource limits for dev
+  resources:
+    limits:
+      memory: 1Gi
+      cpu: 1000m
+    requests:
+      memory: 512Mi
+      cpu: 250m
+
+  # App config overrides
+  appConfig:
+    app:
+      title: Infrastructure Portal
+      baseUrl: http://localhost:7007
+    
+    organization:
+      name: Demo Organization
+    
+    backend:
+      baseUrl: http://localhost:7007
+      listen:
+        port: 7007
+      database:
+        client: better-sqlite3
+        connection: ':memory:'
+    
+    catalog:
+      rules:
+        - allow: [Component, System, API, Resource, Location, Template, Group, User]
+
+# Ingress configuration (optional)
+ingress:
+  enabled: false
+  # Uncomment to enable ingress
+  # className: nginx
+  # hosts:
+  #   - host: backstage.example.local
+  #     paths:
+  #       - path: /
+  #         pathType: Prefix
+
+# PostgreSQL (disabled - using sqlite for dev)
+postgresql:
+  enabled: false
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 7007
+---
+# Secret for Backstage (create this before installing)
+# kubectl create secret generic backstage-secrets \
+#   --namespace backstage \
+#   --from-literal=github-token=YOUR_GITHUB_TOKEN

@@ -1,0 +1,85 @@
+# Backstage Catalog Info
+apiVersion: backstage.io/v1alpha1
+kind: System
+metadata:
+  name: infrastructure
+  description: AWS Infrastructure managed by Crossplane
+  annotations:
+    backstage.io/techdocs-ref: dir:.
+spec:
+  owner: platform-team
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: crossplane-platform
+  description: Crossplane Infrastructure Platform
+  annotations:
+    backstage.io/kubernetes-id: crossplane-claims
+    argocd/app-name: crossplane-claims
+  tags:
+    - crossplane
+    - infrastructure
+    - aws
+spec:
+  type: service
+  lifecycle: production
+  owner: platform-team
+  system: infrastructure
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: aws-s3
+  description: AWS S3 Buckets
+  annotations:
+    backstage.io/kubernetes-id: s3-buckets
+spec:
+  type: storage
+  owner: platform-team
+  system: infrastructure
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: aws-rds
+  description: AWS RDS Databases
+  annotations:
+    backstage.io/kubernetes-id: databases
+spec:
+  type: database
+  owner: platform-team
+  system: infrastructure
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: aws-vpc
+  description: AWS VPC Networks
+  annotations:
+    backstage.io/kubernetes-id: networks
+spec:
+  type: network
+  owner: platform-team
+  system: infrastructure
+---
+apiVersion: backstage.io/v1alpha1
+kind: Group
+metadata:
+  name: platform-team
+  description: Platform Engineering Team
+spec:
+  type: team
+  profile:
+    displayName: Platform Team
+  children: []
+---
+apiVersion: backstage.io/v1alpha1
+kind: User
+metadata:
+  name: demo-user
+spec:
+  profile:
+    displayName: Demo User
+  memberOf:
+    - platform-team

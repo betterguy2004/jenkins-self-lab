@@ -1,0 +1,12 @@
+# Backstage Catalog - All locations
+apiVersion: backstage.io/v1alpha1
+kind: Location
+metadata:
+  name: all-templates
+  description: All infrastructure templates
+spec:
+  targets:
+    - ./catalog-info.yaml
+    - ../templates/s3-bucket-template/template.yaml
+    - ../templates/rds-template/template.yaml
+    - ../templates/vpc-template/template.yaml

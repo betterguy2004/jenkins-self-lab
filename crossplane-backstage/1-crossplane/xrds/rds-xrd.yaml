@@ -1,0 +1,114 @@
+# XRD for RDS Database - Crossplane v2 API
+---
+apiVersion: apiextensions.crossplane.io/v2
+kind: CompositeResourceDefinition
+metadata:
+  name: appdatabases.database.example.com
+  labels:
+    crossplane.io/xrd: appdatabases.database.example.com
+    backstage.io/template: "true"
+spec:
+  scope: Namespaced
+  group: database.example.com
+  names:
+    kind: AppDatabase
+    plural: appdatabases
+  versions:
+    - name: v1alpha1
+      served: true
+      referenceable: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              description: "Configuration for RDS Database"
+              properties:
+                databaseName:
+                  type: string
+                  description: "Name of the database"
+                  minLength: 1
+                  maxLength: 64
+                engine:
+                  type: string
+                  description: "Database engine"
+                  enum:
+                    - mysql
+                    - postgres
+                    - mariadb
+                  default: postgres
+                engineVersion:
+                  type: string
+                  description: "Engine version"
+                  default: "14"
+                instanceClass:
+                  type: string
+                  description: "RDS instance class"
+                  enum:
+                    - db.t3.micro
+                    - db.t3.small
+                    - db.t3.medium
+                  default: db.t3.micro
+                allocatedStorage:
+                  type: integer
+                  description: "Storage size in GB"
+                  minimum: 20
+                  maximum: 100
+                  default: 20
+                region:
+                  type: string
+                  description: "AWS Region"
+                  enum:
+                    - us-east-1
+                    - us-west-2
+                    - eu-west-1
+                    - ap-southeast-1
+                  default: us-east-1
+                publiclyAccessible:
+                  type: boolean
+                  description: "Make database publicly accessible"
+                  default: false
+                multiAZ:
+                  type: boolean
+                  description: "Enable Multi-AZ deployment"
+                  default: false
+                crossplane:
+                  type: object
+                  description: "Crossplane machinery"
+                  x-kubernetes-preserve-unknown-fields: true
+              required:
+                - databaseName
+            status:
+              type: object
+              properties:
+                endpoint:
+                  type: string
+                  description: "Database endpoint"
+                port:
+                  type: integer
+                  description: "Database port"
+                state:
+                  type: string
+                  description: "Current state"
+                conditions:
+                  type: array
+                  items:
+                    type: object
+                    x-kubernetes-preserve-unknown-fields: true
+      additionalPrinterColumns:
+        - name: Database
+          type: string
+          jsonPath: .spec.databaseName
+        - name: Engine
+          type: string
+          jsonPath: .spec.engine
+        - name: Class
+          type: string
+          jsonPath: .spec.instanceClass
+        - name: Ready
+          type: string
+          jsonPath: .status.conditions[?(@.type=='Ready')].status
+        - name: Age
+          type: date
+          jsonPath: .metadata.creationTimestamp

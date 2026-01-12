@@ -1,0 +1,218 @@
+# Composition for VPC Network - Crossplane v2
+---
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: network-composition
+  labels:
+    crossplane.io/xrd: appnetworks.network.example.com
+    provider: aws
+spec:
+  compositeTypeRef:
+    apiVersion: network.example.com/v1alpha1
+    kind: AppNetwork
+  mode: Pipeline
+  pipeline:
+    - step: patch-and-transform
+      functionRef:
+        name: function-patch-and-transform
+      input:
+        apiVersion: pt.fn.crossplane.io/v1beta1
+        kind: Resources
+        resources:
+          # VPC
+          - name: vpc
+            base:
+              apiVersion: ec2.aws.upbound.io/v1beta1
+              kind: VPC
+              spec:
+                forProvider:
+                  enableDnsSupport: true
+                  enableDnsHostnames: true
+                  tags:
+                    Name: ""
+                providerConfigRef:
+                  name: default
+            patches:
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.networkName
+                toFieldPath: metadata.name
+              - type: FromCompositeFieldPath
+                fromFieldPath: metadata.namespace
+                toFieldPath: metadata.namespace
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.vpcCidr
+                toFieldPath: spec.forProvider.cidrBlock
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.region
+                toFieldPath: spec.forProvider.region
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.enableDnsHostnames
+                toFieldPath: spec.forProvider.enableDnsHostnames
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.enableDnsSupport
+                toFieldPath: spec.forProvider.enableDnsSupport
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.networkName
+                toFieldPath: spec.forProvider.tags.Name
+              - type: ToCompositeFieldPath
+                fromFieldPath: status.atProvider.id
+                toFieldPath: status.vpcId
+
+          # Internet Gateway
+          - name: internet-gateway
+            base:
+              apiVersion: ec2.aws.upbound.io/v1beta1
+              kind: InternetGateway
+              spec:
+                forProvider:
+                  vpcIdSelector:
+                    matchControllerRef: true
+                providerConfigRef:
+                  name: default
+            patches:
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.networkName
+                toFieldPath: metadata.name
+                transforms:
+                  - type: string
+                    string:
+                      fmt: "%s-igw"
+              - type: FromCompositeFieldPath
+                fromFieldPath: metadata.namespace
+                toFieldPath: metadata.namespace
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.region
+                toFieldPath: spec.forProvider.region
+
+          # Public Subnet 1
+          - name: public-subnet-1
+            base:
+              apiVersion: ec2.aws.upbound.io/v1beta1
+              kind: Subnet
+              metadata:
+                labels:
+                  access: public
+                  zone: a
+              spec:
+                forProvider:
+                  mapPublicIpOnLaunch: true
+                  vpcIdSelector:
+                    matchControllerRef: true
+                  tags:
+                    Type: public
+                providerConfigRef:
+                  name: default
+            patches:
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.networkName
+                toFieldPath: metadata.name
+                transforms:
+                  - type: string
+                    string:
+                      fmt: "%s-public-subnet-1"
+              - type: FromCompositeFieldPath
+                fromFieldPath: metadata.namespace
+                toFieldPath: metadata.namespace
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.region
+                toFieldPath: spec.forProvider.region
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.region
+                toFieldPath: spec.forProvider.availabilityZone
+                transforms:
+                  - type: string
+                    string:
+                      fmt: "%sa"
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.vpcCidr
+                toFieldPath: spec.forProvider.cidrBlock
+                transforms:
+                  - type: string
+                    string:
+                      type: Regexp
+                      regexp:
+                        match: ^(\d+\.\d+)\.\d+\.\d+/\d+$
+                        group: 1
+                  - type: string
+                    string:
+                      fmt: "%s.1.0/24"
+
+          # Public Subnet 2
+          - name: public-subnet-2
+            base:
+              apiVersion: ec2.aws.upbound.io/v1beta1
+              kind: Subnet
+              metadata:
+                labels:
+                  access: public
+                  zone: b
+              spec:
+                forProvider:
+                  mapPublicIpOnLaunch: true
+                  vpcIdSelector:
+                    matchControllerRef: true
+                  tags:
+                    Type: public
+                providerConfigRef:
+                  name: default
+            patches:
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.networkName
+                toFieldPath: metadata.name
+                transforms:
+                  - type: string
+                    string:
+                      fmt: "%s-public-subnet-2"
+              - type: FromCompositeFieldPath
+                fromFieldPath: metadata.namespace
+                toFieldPath: metadata.namespace
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.region
+                toFieldPath: spec.forProvider.region
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.region
+                toFieldPath: spec.forProvider.availabilityZone
+                transforms:
+                  - type: string
+                    string:
+                      fmt: "%sb"
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.vpcCidr
+                toFieldPath: spec.forProvider.cidrBlock
+                transforms:
+                  - type: string
+                    string:
+                      type: Regexp
+                      regexp:
+                        match: ^(\d+\.\d+)\.\d+\.\d+/\d+$
+                        group: 1
+                  - type: string
+                    string:
+                      fmt: "%s.2.0/24"
+
+          # Route Table for Public Subnets
+          - name: public-route-table
+            base:
+              apiVersion: ec2.aws.upbound.io/v1beta1
+              kind: RouteTable
+              spec:
+                forProvider:
+                  vpcIdSelector:
+                    matchControllerRef: true
+                providerConfigRef:
+                  name: default
+            patches:
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.networkName
+                toFieldPath: metadata.name
+                transforms:
+                  - type: string
+                    string:
+                      fmt: "%s-public-rt"
+              - type: FromCompositeFieldPath
+                fromFieldPath: metadata.namespace
+                toFieldPath: metadata.namespace
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.region
+                toFieldPath: spec.forProvider.region

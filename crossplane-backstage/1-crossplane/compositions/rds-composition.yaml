@@ -1,0 +1,120 @@
+# Composition for RDS Database - Crossplane v2
+---
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: database-composition
+  labels:
+    crossplane.io/xrd: appdatabases.database.example.com
+    provider: aws
+spec:
+  compositeTypeRef:
+    apiVersion: database.example.com/v1alpha1
+    kind: AppDatabase
+  mode: Pipeline
+  pipeline:
+    - step: patch-and-transform
+      functionRef:
+        name: function-patch-and-transform
+      input:
+        apiVersion: pt.fn.crossplane.io/v1beta1
+        kind: Resources
+        resources:
+          # DB Subnet Group
+          - name: db-subnet-group
+            base:
+              apiVersion: rds.aws.upbound.io/v1beta1
+              kind: SubnetGroup
+              spec:
+                forProvider:
+                  description: "Subnet group for database"
+                  subnetIdSelector:
+                    matchLabels:
+                      access: public
+                providerConfigRef:
+                  name: default
+            patches:
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.databaseName
+                toFieldPath: metadata.name
+                transforms:
+                  - type: string
+                    string:
+                      fmt: "%s-subnet-group"
+              - type: FromCompositeFieldPath
+                fromFieldPath: metadata.namespace
+                toFieldPath: metadata.namespace
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.region
+                toFieldPath: spec.forProvider.region
+
+          # RDS Instance
+          - name: rds-instance
+            base:
+              apiVersion: rds.aws.upbound.io/v1beta2
+              kind: Instance
+              spec:
+                forProvider:
+                  skipFinalSnapshot: true
+                  username: admin
+                  autoGeneratePassword: true
+                  passwordSecretRef:
+                    key: password
+                  backupRetentionPeriod: 0
+                  storageType: gp2
+                providerConfigRef:
+                  name: default
+            patches:
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.databaseName
+                toFieldPath: metadata.name
+              - type: FromCompositeFieldPath
+                fromFieldPath: metadata.namespace
+                toFieldPath: metadata.namespace
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.databaseName
+                toFieldPath: spec.forProvider.dbName
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.engine
+                toFieldPath: spec.forProvider.engine
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.engineVersion
+                toFieldPath: spec.forProvider.engineVersion
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.instanceClass
+                toFieldPath: spec.forProvider.instanceClass
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.allocatedStorage
+                toFieldPath: spec.forProvider.allocatedStorage
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.region
+                toFieldPath: spec.forProvider.region
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.publiclyAccessible
+                toFieldPath: spec.forProvider.publiclyAccessible
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.multiAZ
+                toFieldPath: spec.forProvider.multiAz
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.databaseName
+                toFieldPath: spec.forProvider.dbSubnetGroupNameRef.name
+                transforms:
+                  - type: string
+                    string:
+                      fmt: "%s-subnet-group"
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.databaseName
+                toFieldPath: spec.forProvider.passwordSecretRef.name
+                transforms:
+                  - type: string
+                    string:
+                      fmt: "%s-password"
+              - type: FromCompositeFieldPath
+                fromFieldPath: metadata.namespace
+                toFieldPath: spec.forProvider.passwordSecretRef.namespace
+              - type: ToCompositeFieldPath
+                fromFieldPath: status.atProvider.endpoint
+                toFieldPath: status.endpoint
+              - type: ToCompositeFieldPath
+                fromFieldPath: status.atProvider.port
+                toFieldPath: status.port

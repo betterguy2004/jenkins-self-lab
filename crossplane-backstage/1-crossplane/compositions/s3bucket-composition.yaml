@@ -1,0 +1,149 @@
+# Composition for S3 Bucket - Crossplane v2
+# Uses namespaced XR and namespaced MRs
+---
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: s3bucket-composition
+  labels:
+    crossplane.io/xrd: apps3buckets.storage.example.com
+    provider: aws
+spec:
+  compositeTypeRef:
+    apiVersion: storage.example.com/v1alpha1
+    kind: AppS3Bucket
+  mode: Pipeline
+  pipeline:
+    - step: patch-and-transform
+      functionRef:
+        name: function-patch-and-transform
+      input:
+        apiVersion: pt.fn.crossplane.io/v1beta1
+        kind: Resources
+        resources:
+          # S3 Bucket - namespaced in v2
+          - name: bucket
+            base:
+              apiVersion: s3.aws.upbound.io/v1beta2
+              kind: Bucket
+              spec:
+                forProvider: {}
+                providerConfigRef:
+                  name: default
+            patches:
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.bucketName
+                toFieldPath: metadata.name
+              - type: FromCompositeFieldPath
+                fromFieldPath: metadata.namespace
+                toFieldPath: metadata.namespace
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.region
+                toFieldPath: spec.forProvider.region
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.tags
+                toFieldPath: spec.forProvider.tags
+              - type: ToCompositeFieldPath
+                fromFieldPath: status.atProvider.arn
+                toFieldPath: status.bucketArn
+              - type: ToCompositeFieldPath
+                fromFieldPath: status.atProvider.bucketDomainName
+                toFieldPath: status.bucketDomainName
+
+          # Bucket Versioning
+          - name: bucket-versioning
+            base:
+              apiVersion: s3.aws.upbound.io/v1beta1
+              kind: BucketVersioning
+              spec:
+                forProvider:
+                  versioningConfiguration:
+                    - status: Enabled
+                providerConfigRef:
+                  name: default
+            patches:
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.bucketName
+                toFieldPath: metadata.name
+                transforms:
+                  - type: string
+                    string:
+                      fmt: "%s-versioning"
+              - type: FromCompositeFieldPath
+                fromFieldPath: metadata.namespace
+                toFieldPath: metadata.namespace
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.bucketName
+                toFieldPath: spec.forProvider.bucket
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.region
+                toFieldPath: spec.forProvider.region
+
+          # Server Side Encryption
+          - name: bucket-encryption
+            base:
+              apiVersion: s3.aws.upbound.io/v1beta1
+              kind: BucketServerSideEncryptionConfiguration
+              spec:
+                forProvider:
+                  rule:
+                    - applyServerSideEncryptionByDefault:
+                        - sseAlgorithm: AES256
+                providerConfigRef:
+                  name: default
+            patches:
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.bucketName
+                toFieldPath: metadata.name
+                transforms:
+                  - type: string
+                    string:
+                      fmt: "%s-encryption"
+              - type: FromCompositeFieldPath
+                fromFieldPath: metadata.namespace
+                toFieldPath: metadata.namespace
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.bucketName
+                toFieldPath: spec.forProvider.bucket
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.region
+                toFieldPath: spec.forProvider.region
+
+          # Public Access Block
+          - name: bucket-public-access-block
+            base:
+              apiVersion: s3.aws.upbound.io/v1beta1
+              kind: BucketPublicAccessBlock
+              spec:
+                forProvider:
+                  blockPublicAcls: true
+                  blockPublicPolicy: true
+                  ignorePublicAcls: true
+                  restrictPublicBuckets: true
+                providerConfigRef:
+                  name: default
+            patches:
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.bucketName
+                toFieldPath: metadata.name
+                transforms:
+                  - type: string
+                    string:
+                      fmt: "%s-public-access-block"
+              - type: FromCompositeFieldPath
+                fromFieldPath: metadata.namespace
+                toFieldPath: metadata.namespace
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.bucketName
+                toFieldPath: spec.forProvider.bucket
+              - type: FromCompositeFieldPath
+                fromFieldPath: spec.region
+                toFieldPath: spec.forProvider.region
+---
+# Install the patch-and-transform function
+apiVersion: pkg.crossplane.io/v1beta1
+kind: Function
+metadata:
+  name: function-patch-and-transform
+spec:
+  package: xpkg.upbound.io/crossplane-contrib/function-patch-and-transform:v0.7.0

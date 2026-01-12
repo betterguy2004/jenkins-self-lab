@@ -1,0 +1,133 @@
+# ArgoCD Helm Values - Development Configuration
+# For POC/Demo purposes
+
+# Server configuration
+server:
+  # Enable insecure mode for dev (no TLS between server and repo-server)
+  extraArgs:
+    - --insecure
+  
+  # Service configuration
+  service:
+    type: NodePort
+    servicePortHttp: 80
+    servicePortHttps: 443 # Keeping this for potential future use, but primary access via 80
+    servicePortHttpName: http
+    servicePortHttpsName: https
+  
+  # Ingress (optional - uncomment if you have ingress controller)
+  # ingress:
+  #   enabled: true
+  #   ingressClassName: nginx
+  #   hosts:
+  #     - argocd.example.local
+
+# Reduce resource usage for dev
+controller:
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+
+repoServer:
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+applicationSet:
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
+
+# Redis configuration
+redis:
+  resources:
+    limits:
+      cpu: 200m
+      memory: 128Mi
+    requests:
+      cpu: 100m
+      memory: 64Mi
+
+# Disable HA for dev
+redis-ha:
+  enabled: false
+
+# Config for managing Crossplane resources
+configs:
+  cm:
+    # Enable apiKey for admin user to generate tokens for Backstage
+    "accounts.admin": apiKey
+    
+    # Track Crossplane resources
+    resource.customizations.health.storage.example.com_S3Bucket: |
+      hs = {}
+      if obj.status ~= nil then
+        if obj.status.conditions ~= nil then
+          for i, condition in ipairs(obj.status.conditions) do
+            if condition.type == "Ready" and condition.status == "True" then
+              hs.status = "Healthy"
+              hs.message = "S3 Bucket is ready"
+              return hs
+            end
+          end
+        end
+      end
+      hs.status = "Progressing"
+      hs.message = "Waiting for S3 Bucket to be ready"
+      return hs
+    
+    resource.customizations.health.database.example.com_Database: |
+      hs = {}
+      if obj.status ~= nil then
+        if obj.status.conditions ~= nil then
+          for i, condition in ipairs(obj.status.conditions) do
+            if condition.type == "Ready" and condition.status == "True" then
+              hs.status = "Healthy"
+              hs.message = "Database is ready"
+              return hs
+            end
+          end
+        end
+      end
+      hs.status = "Progressing"
+      hs.message = "Waiting for Database to be ready"
+      return hs
+
+    resource.customizations.health.network.example.com_Network: |
+      hs = {}
+      if obj.status ~= nil then
+        if obj.status.conditions ~= nil then
+          for i, condition in ipairs(obj.status.conditions) do
+            if condition.type == "Ready" and condition.status == "True" then
+              hs.status = "Healthy"
+              hs.message = "Network is ready"
+              return hs
+            end
+          end
+        end
+      end
+      hs.status = "Progressing"
+      hs.message = "Waiting for Network to be ready"
+      return hs
+
+  # RBAC configuration
+  rbac:
+    policy.default: role:readonly
+    policy.csv: |
+      p, role:admin, applications, *, */*, allow
+      p, role:admin, clusters, *, *, allow
+      p, role:admin, repositories, *, *, allow
+      p, role:admin, projects, *, *, allow
+      g, admin, role:admin

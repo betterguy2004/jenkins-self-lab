@@ -1,0 +1,115 @@
+# ArgoCD Application for Crossplane Resources
+# This monitors the GitOps repository for infrastructure claims
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: infrastructure
+  namespace: argocd
+spec:
+  description: Infrastructure resources managed by Crossplane
+  sourceRepos:
+    - '*'  # In production, restrict to specific repos
+  destinations:
+    - namespace: '*'
+      server: https://kubernetes.default.svc
+  clusterResourceWhitelist:
+    - group: '*'
+      kind: '*'
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: crossplane-claims
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: crossplane-claims
+    backstage.io/kubernetes-id: crossplane-claims
+  annotations:
+    # Backstage annotations for discovery
+    backstage.io/kubernetes-id: crossplane-claims
+spec:
+  project: infrastructure
+  
+  source:
+    # IMPORTANT: Update this to your GitOps repository
+    repoURL: https://github.com/YOUR_USERNAME/crossplane-gitops-repo.git
+    targetRevision: main
+    path: claims
+    
+    # Directory recurse
+    directory:
+      recurse: true
+      jsonnet: {}
+  
+  destination:
+    server: https://kubernetes.default.svc
+    # Claims will be created in their respective namespaces
+    namespace: default
+  
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: true
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+      - PruneLast=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+  
+  # Ignore differences that Crossplane manages
+  ignoreDifferences:
+    - group: storage.example.com
+      kind: S3Bucket
+      jsonPointers:
+        - /status
+    - group: database.example.com
+      kind: Database
+      jsonPointers:
+        - /status
+    - group: network.example.com
+      kind: Network
+      jsonPointers:
+        - /status
+---
+# ApplicationSet for automatic application creation based on folders
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: infrastructure-claims
+  namespace: argocd
+spec:
+  generators:
+    - git:
+        repoURL: https://github.com/YOUR_USERNAME/crossplane-gitops-repo.git
+        revision: main
+        directories:
+          - path: claims/*
+  template:
+    metadata:
+      name: '{{path.basename}}'
+      namespace: argocd
+      labels:
+        backstage.io/kubernetes-id: '{{path.basename}}'
+    spec:
+      project: infrastructure
+      source:
+        repoURL: https://github.com/YOUR_USERNAME/crossplane-gitops-repo.git
+        targetRevision: main
+        path: '{{path}}'
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: default
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true

@@ -1,0 +1,34 @@
+# AWS Provider Family - Crossplane v2
+# Simple provider installation without runtime config
+---
+# AWS S3 Provider
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: provider-aws-s3
+spec:
+  package: xpkg.upbound.io/upbound/provider-aws-s3:v1.17.0
+---
+# AWS RDS Provider
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: provider-aws-rds
+spec:
+  package: xpkg.upbound.io/upbound/provider-aws-rds:v1.17.0
+---
+# AWS EC2 Provider
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: provider-aws-ec2
+spec:
+  package: xpkg.upbound.io/upbound/provider-aws-ec2:v1.17.0
+---
+# AWS IAM Provider
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: provider-aws-iam
+spec:
+  package: xpkg.upbound.io/upbound/provider-aws-iam:v1.17.0

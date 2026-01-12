@@ -1,0 +1,26 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: vpc-${{ values.networkName }}
+  title: VPC Network - ${{ values.networkName }}
+  description: ${{ values.description }}
+  annotations:
+    backstage.io/kubernetes-id: vpc-${{ values.networkName }}
+    backstage.io/kubernetes-namespace: default
+    argocd/app-name: vpc-${{ values.networkName }}
+    github.com/project-slug: ${{ values.owner | replace("group:", "") | replace("user:", "") }}/infra-vpc-${{ values.networkName }}
+  labels:
+    environment: ${{ values.environment }}
+    resource-type: vpc-network
+    provider: aws
+  tags:
+    - aws
+    - vpc
+    - network
+    - crossplane
+    - ${{ values.environment }}
+spec:
+  type: resource
+  lifecycle: production
+  owner: ${{ values.owner }}
+  system: infrastructure

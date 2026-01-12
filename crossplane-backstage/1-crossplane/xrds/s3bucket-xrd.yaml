@@ -1,0 +1,128 @@
+# XRD for S3 Bucket - Crossplane v2 API
+# Now uses scope: Namespaced (default in v2)
+---
+apiVersion: apiextensions.crossplane.io/v2
+kind: CompositeResourceDefinition
+metadata:
+  name: apps3buckets.storage.example.com
+  labels:
+    crossplane.io/xrd: apps3buckets.storage.example.com
+    backstage.io/template: "true"
+spec:
+  scope: Namespaced  # v2 style - namespaced by default
+  group: storage.example.com
+  names:
+    kind: AppS3Bucket
+    plural: apps3buckets
+  versions:
+    - name: v1alpha1
+      served: true
+      referenceable: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              description: "Configuration for S3 Bucket"
+              properties:
+                # User-facing parameters
+                bucketName:
+                  type: string
+                  description: "Name of the S3 bucket (must be globally unique)"
+                  minLength: 3
+                  maxLength: 63
+                region:
+                  type: string
+                  description: "AWS Region for the bucket"
+                  enum:
+                    - us-east-1
+                    - us-west-2
+                    - eu-west-1
+                    - ap-southeast-1
+                  default: us-east-1
+                versioning:
+                  type: boolean
+                  description: "Enable versioning for the bucket"
+                  default: false
+                encryption:
+                  type: boolean
+                  description: "Enable server-side encryption"
+                  default: true
+                publicAccess:
+                  type: boolean
+                  description: "Allow public access (not recommended)"
+                  default: false
+                tags:
+                  type: object
+                  description: "Additional tags for the bucket"
+                  additionalProperties:
+                    type: string
+                # Crossplane v2 moves machinery under spec.crossplane
+                crossplane:
+                  type: object
+                  description: "Crossplane machinery"
+                  properties:
+                    compositionRef:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                    compositionRevisionRef:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                    resourceRefs:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          apiVersion:
+                            type: string
+                          kind:
+                            type: string
+                          name:
+                            type: string
+              required:
+                - bucketName
+            status:
+              type: object
+              properties:
+                bucketArn:
+                  type: string
+                  description: "ARN of the created bucket"
+                bucketDomainName:
+                  type: string
+                  description: "Domain name of the bucket"
+                state:
+                  type: string
+                  description: "Current state of the bucket"
+                conditions:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                      status:
+                        type: string
+                      reason:
+                        type: string
+                      message:
+                        type: string
+                      lastTransitionTime:
+                        type: string
+      additionalPrinterColumns:
+        - name: Bucket Name
+          type: string
+          jsonPath: .spec.bucketName
+        - name: Region
+          type: string
+          jsonPath: .spec.region
+        - name: Ready
+          type: string
+          jsonPath: .status.conditions[?(@.type=='Ready')].status
+        - name: Age
+          type: date
+          jsonPath: .metadata.creationTimestamp
