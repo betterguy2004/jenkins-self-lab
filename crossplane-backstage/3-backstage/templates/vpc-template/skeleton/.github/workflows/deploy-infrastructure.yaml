@@ -59,7 +59,7 @@ jobs:
           argocd repo add ${{ github.server_url }}/${{ github.repository }}.git \
             --username ${{ github.actor }} \
             --password ${{ secrets.GITHUB_TOKEN }} \
-            --insecure-skip-server-verification --upsert
+            --insecure-skip-server-verification --upsert --plaintext
         continue-on-error: true
       
       - name: Create ArgoCD Application
