@@ -61,8 +61,7 @@ jobs:
         run: |
           argocd login "$ARGOCD_SERVER" \
             --auth-token "$ARGOCD_AUTH_TOKEN" \
-            --plaintext \
-            --grpc-web
+            --plaintext 
       
       # ------------------------------------------
       # Register this repository with ArgoCD
