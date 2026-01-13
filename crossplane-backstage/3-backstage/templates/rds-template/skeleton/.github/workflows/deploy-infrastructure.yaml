@@ -29,7 +29,9 @@ on:
         required: true
         type: string
 
-# Secrets are accessed directly in steps to avoid Backstage template rendering issues
+env:
+  ARGOCD_SERVER: ${{ "${{" }} secrets.ARGOCD_SERVER {{ "}}" }}
+  ARGOCD_AUTH_TOKEN: ${{ "${{" }} secrets.ARGOCD_AUTH_TOKEN {{ "}}" }}
 
 jobs:
   deploy:
@@ -48,8 +50,8 @@ jobs:
       
       - name: Login to ArgoCD
         env:
-          ARGOCD_SERVER: ${{ secrets.ARGOCD_SERVER }}
-          ARGOCD_AUTH_TOKEN: ${{ secrets.ARGOCD_AUTH_TOKEN }}
+          ARGOCD_SERVER: ${{ "${{" }} secrets.ARGOCD_SERVER {{ "}}" }}
+          ARGOCD_AUTH_TOKEN: ${{ "${{" }} secrets.ARGOCD_AUTH_TOKEN {{ "}}" }}
         run: |
           argocd login "$ARGOCD_SERVER" \
             --auth-token "$ARGOCD_AUTH_TOKEN" \
@@ -58,16 +60,16 @@ jobs:
       
       - name: Register Repository
         run: |
-          argocd repo add ${{ github.server_url }}/${{ github.repository }}.git \
-            --username ${{ github.actor }} \
-            --password ${{ secrets.GITHUB_TOKEN }} \
-            --insecure-skip-server-verification --upsert --plaintext
+          argocd repo add ${{ "${{" }} github.server_url {{ "}}" }}/${{ "${{" }} github.repository {{ "}}" }}.git \
+            --username ${{ "${{" }} github.actor {{ "}}" }} \
+            --password ${{ "${{" }} secrets.GITHUB_TOKEN {{ "}}" }} \
+            --insecure-skip-server-verification --upsert
         continue-on-error: true
       
       - name: Create ArgoCD Application
         run: |
-          argocd app create ${{ inputs.argocd_app_name }} \
-            --repo ${{ github.server_url }}/${{ github.repository }}.git \
+          argocd app create ${{ "${{" }} inputs.argocd_app_name {{ "}}" }} \
+            --repo ${{ "${{" }} github.server_url {{ "}}" }}/${{ "${{" }} github.repository {{ "}}" }}.git \
             --path manifests \
             --dest-server https://kubernetes.default.svc \
             --dest-namespace default \
@@ -76,8 +78,8 @@ jobs:
       
       - name: Sync Application
         run: |
-          argocd app sync ${{ inputs.argocd_app_name }} --async
-          argocd app wait ${{ inputs.argocd_app_name }} --timeout 600 --health
+          argocd app sync ${{ "${{" }} inputs.argocd_app_name {{ "}}" }} --async
+          argocd app wait ${{ "${{" }} inputs.argocd_app_name {{ "}}" }} --timeout 600 --health
         continue-on-error: true
       
       - name: Summary
@@ -86,6 +88,6 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Property | Value |" >> $GITHUB_STEP_SUMMARY
           echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Database | ${{ inputs.resource_name }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Environment | ${{ inputs.environment }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Region | ${{ inputs.region }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Database | ${{ "${{" }} inputs.resource_name {{ "}}" }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Environment | ${{ "${{" }} inputs.environment {{ "}}" }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Region | ${{ "${{" }} inputs.region {{ "}}" }} |" >> $GITHUB_STEP_SUMMARY

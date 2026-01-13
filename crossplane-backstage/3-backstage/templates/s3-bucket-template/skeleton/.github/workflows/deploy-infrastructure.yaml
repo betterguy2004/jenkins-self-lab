@@ -31,7 +31,9 @@ on:
         required: true
         type: string
 
-# Secrets are accessed directly in steps to avoid Backstage template rendering issues
+env:
+  ARGOCD_SERVER: ${{ "${{" }} secrets.ARGOCD_SERVER {{ "}}" }}
+  ARGOCD_AUTH_TOKEN: ${{ "${{" }} secrets.ARGOCD_AUTH_TOKEN {{ "}}" }}
   
 jobs:
   # ============================================
@@ -56,12 +58,13 @@ jobs:
       # ------------------------------------------
       - name: Login to ArgoCD
         env:
-          ARGOCD_SERVER: ${{ secrets.ARGOCD_SERVER }}
-          ARGOCD_AUTH_TOKEN: ${{ secrets.ARGOCD_AUTH_TOKEN }}
+          ARGOCD_SERVER: ${{ "${{" }} secrets.ARGOCD_SERVER {{ "}}" }}
+          ARGOCD_AUTH_TOKEN: ${{ "${{" }} secrets.ARGOCD_AUTH_TOKEN {{ "}}" }}
         run: |
           argocd login "$ARGOCD_SERVER" \
             --auth-token "$ARGOCD_AUTH_TOKEN" \
-            --plaintext 
+            --plaintext \
+            --grpc-web
       
       # ------------------------------------------
       # Register this repository with ArgoCD
@@ -69,62 +72,20 @@ jobs:
       - name: Register Repository in ArgoCD
         run: |
           # Add repository to ArgoCD
-          argocd repo add ${{ github.server_url }}/${{ github.repository }}.git \
-            --username ${{ github.actor }} \
-            --password ${{ secrets.GITHUB_TOKEN }} \
+          argocd repo add ${{ "${{" }} github.server_url {{ "}}" }}/${{ "${{" }} github.repository {{ "}}" }}.git \
+            --username ${{ "${{" }} github.actor {{ "}}" }} \
+            --password ${{ "${{" }} secrets.GITHUB_TOKEN {{ "}}" }} \
             --insecure-skip-server-verification \
             --upsert
         continue-on-error: true  # Repository might already exist
       
       # ------------------------------------------
-      # Create ArgoCD Application
+      # Create ArgoCD Application (CLI)
       # ------------------------------------------
       - name: Create ArgoCD Application
         run: |
-          cat <<EOF | kubectl apply -f - --server-side
-          apiVersion: argoproj.io/v1alpha1
-          kind: Application
-          metadata:
-            name: ${{ inputs.argocd_app_name }}
-            namespace: argocd
-            labels:
-              app.kubernetes.io/managed-by: backstage
-              backstage.io/kubernetes-id: ${{ inputs.argocd_app_name }}
-              environment: ${{ inputs.environment }}
-            annotations:
-              argocd.argoproj.io/sync-wave: "0"
-          spec:
-            project: default
-            source:
-              repoURL: ${{ github.server_url }}/${{ github.repository }}.git
-              targetRevision: main
-              path: manifests
-            destination:
-              server: https://kubernetes.default.svc
-              namespace: default
-            syncPolicy:
-              automated:
-                prune: true
-                selfHeal: true
-                allowEmpty: false
-              syncOptions:
-                - CreateNamespace=true
-                - PrunePropagationPolicy=foreground
-              retry:
-                limit: 5
-                backoff:
-                  duration: 5s
-                  factor: 2
-                  maxDuration: 3m
-          EOF
-        env:
-          KUBECONFIG: ${{ secrets.KUBECONFIG }}
-      
-      # Alternative: Use ArgoCD CLI to create application
-      - name: Create ArgoCD Application (CLI)
-        run: |
-          argocd app create ${{ inputs.argocd_app_name }} \
-            --repo ${{ github.server_url }}/${{ github.repository }}.git \
+          argocd app create ${{ "${{" }} inputs.argocd_app_name {{ "}}" }} \
+            --repo ${{ "${{" }} github.server_url {{ "}}" }}/${{ "${{" }} github.repository {{ "}}" }}.git \
             --path manifests \
             --dest-server https://kubernetes.default.svc \
             --dest-namespace default \
@@ -139,14 +100,14 @@ jobs:
       # ------------------------------------------
       - name: Sync ArgoCD Application
         run: |
-          argocd app sync ${{ inputs.argocd_app_name }} --async
+          argocd app sync ${{ "${{" }} inputs.argocd_app_name {{ "}}" }} --async
           
           echo "✅ ArgoCD Application created and syncing!"
           echo ""
           echo "📊 View status:"
-          echo "  argocd app get ${{ inputs.argocd_app_name }}"
+          echo "  argocd app get ${{ "${{" }} inputs.argocd_app_name {{ "}}" }}"
           echo ""
-          echo "🔗 ArgoCD URL: https://${{ env.ARGOCD_SERVER }}/applications/${{ inputs.argocd_app_name }}"
+          echo "🔗 ArgoCD URL: https://$ARGOCD_SERVER/applications/${{ "${{" }} inputs.argocd_app_name {{ "}}" }}"
       
       # ------------------------------------------
       # Wait for sync and report status
@@ -154,7 +115,7 @@ jobs:
       - name: Wait for Sync Completion
         run: |
           echo "⏳ Waiting for ArgoCD to sync resources..."
-          argocd app wait ${{ inputs.argocd_app_name }} \
+          argocd app wait ${{ "${{" }} inputs.argocd_app_name {{ "}}" }} \
             --timeout 300 \
             --health \
             --sync
@@ -163,7 +124,7 @@ jobs:
           echo "============================================"
           echo "✅ Deployment Complete!"
           echo "============================================"
-          argocd app get ${{ inputs.argocd_app_name }}
+          argocd app get ${{ "${{" }} inputs.argocd_app_name {{ "}}" }}
         continue-on-error: true  # Don't fail if wait times out
       
       - name: Summary
@@ -172,11 +133,11 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Property | Value |" >> $GITHUB_STEP_SUMMARY
           echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Resource Type | ${{ inputs.resource_type }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Resource Name | ${{ inputs.resource_name }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Environment | ${{ inputs.environment }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Region | ${{ inputs.region }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| ArgoCD App | ${{ inputs.argocd_app_name }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Resource Type | ${{ "${{" }} inputs.resource_type {{ "}}" }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Resource Name | ${{ "${{" }} inputs.resource_name {{ "}}" }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Environment | ${{ "${{" }} inputs.environment {{ "}}" }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Region | ${{ "${{" }} inputs.region {{ "}}" }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| ArgoCD App | ${{ "${{" }} inputs.argocd_app_name {{ "}}" }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### 🔗 Links" >> $GITHUB_STEP_SUMMARY
-          echo "- [ArgoCD Application](https://${{ env.ARGOCD_SERVER }}/applications/${{ inputs.argocd_app_name }})" >> $GITHUB_STEP_SUMMARY
+          echo "- [ArgoCD Application](https://$ARGOCD_SERVER/applications/${{ "${{" }} inputs.argocd_app_name {{ "}}" }})" >> $GITHUB_STEP_SUMMARY
