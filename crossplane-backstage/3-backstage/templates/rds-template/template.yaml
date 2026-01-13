@@ -142,7 +142,7 @@ spec:
       action: publish:github
       input:
         description: 'RDS Database: ${{ parameters.databaseName }} - Created by Backstage'
-        repoUrl: github.com?owner=${{ parameters.owner | replace("group:", "") | replace("user:", "") }}&repo=infra-rds-${{ parameters.databaseName }}
+        repoUrl: github.com?owner=betterguy2004&repo=infra-rds-${{ parameters.databaseName }}
         defaultBranch: main
         repoVisibility: private
         sourcePath: .
@@ -151,7 +151,7 @@ spec:
       name: Trigger GitHub Actions Workflow
       action: github:actions:dispatch
       input:
-        repoUrl: github.com?owner=${{ parameters.owner | replace("group:", "") | replace("user:", "") }}&repo=infra-rds-${{ parameters.databaseName }}
+        repoUrl: github.com?owner=betterguy2004&repo=infra-rds-${{ parameters.databaseName }}
         workflowId: deploy-infrastructure.yaml
         branchOrTagName: main
         workflowInputs:

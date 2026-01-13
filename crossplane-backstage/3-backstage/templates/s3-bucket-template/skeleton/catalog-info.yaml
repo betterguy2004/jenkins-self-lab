@@ -16,7 +16,7 @@ metadata:
     argocd/app-name: s3-${{ values.bucketName }}
     
     # GitHub integration
-    github.com/project-slug: ${{ values.owner | replace("group:", "") | replace("user:", "") }}/infra-s3-${{ values.bucketName }}
+    github.com/project-slug: betterguy2004/infra-s3-${{ values.bucketName }}
     
     # Techdocs (optional)
     backstage.io/techdocs-ref: dir:.
