@@ -6,7 +6,7 @@ kind: Component
 metadata:
   name: s3-${{ values.bucketName }}
   title: S3 Bucket - ${{ values.bucketName }}
-  description: ${{ values.description }}
+  description: ${{ values.description or "S3 bucket managed by Crossplane" }}
   annotations:
     # Kubernetes plugin - view resources
     backstage.io/kubernetes-id: s3-${{ values.bucketName }}

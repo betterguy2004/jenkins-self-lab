@@ -3,7 +3,7 @@ kind: Component
 metadata:
   name: vpc-${{ values.networkName }}
   title: VPC Network - ${{ values.networkName }}
-  description: ${{ values.description }}
+  description: ${{ values.description or "VPC network managed by Crossplane" }}
   annotations:
     backstage.io/kubernetes-id: vpc-${{ values.networkName }}
     backstage.io/kubernetes-namespace: default

@@ -3,7 +3,7 @@ kind: Component
 metadata:
   name: rds-${{ values.databaseName }}
   title: RDS Database - ${{ values.databaseName }}
-  description: ${{ values.description }}
+  description: ${{ values.description or "RDS database managed by Crossplane" }}
   annotations:
     backstage.io/kubernetes-id: rds-${{ values.databaseName }}
     backstage.io/kubernetes-namespace: default
