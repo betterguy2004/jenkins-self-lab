@@ -29,9 +29,7 @@ on:
         required: true
         type: string
 
-env:
-  ARGOCD_SERVER: ${{ secrets.ARGOCD_SERVER }}
-  ARGOCD_AUTH_TOKEN: ${{ secrets.ARGOCD_AUTH_TOKEN }}
+# Secrets are accessed directly in steps to avoid Backstage template rendering issues
 
 jobs:
   deploy:
@@ -49,10 +47,14 @@ jobs:
           sudo mv argocd /usr/local/bin/
       
       - name: Login to ArgoCD
+        env:
+          ARGOCD_SERVER: ${{ secrets.ARGOCD_SERVER }}
+          ARGOCD_AUTH_TOKEN: ${{ secrets.ARGOCD_AUTH_TOKEN }}
         run: |
-          argocd login ${{ env.ARGOCD_SERVER }} \
-            --auth-token ${{ env.ARGOCD_AUTH_TOKEN }} \
-            --insecure --grpc-web
+          argocd login "$ARGOCD_SERVER" \
+            --auth-token "$ARGOCD_AUTH_TOKEN" \
+            --plaintext \
+            --grpc-web
       
       - name: Register Repository
         run: |
