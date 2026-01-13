@@ -155,6 +155,61 @@ The template has been updated with a comment explaining that secrets should be c
 
 ## Troubleshooting
 
+### Issue: "argocd login" requires SERVER argument
+
+**Error message:**
+```
+Error: accepts 1 arg(s), received 0
+Usage: argocd login SERVER [flags]
+```
+
+**Root Cause**: The `ARGOCD_SERVER` secret is empty or not set.
+
+**Solution**:
+1. Verify the secret exists:
+   ```powershell
+   gh secret list --org manifest-crossplane-poc
+   # or for personal repos
+   gh secret list --repo betterguy2004/infra-s3-test
+   ```
+
+2. Set the secret with correct value:
+   ```powershell
+   # For organization
+   gh secret set ARGOCD_SERVER --org manifest-crossplane-poc --body "argocd-server.argocd.svc.cluster.local"
+   
+   # For specific repo
+   gh secret set ARGOCD_SERVER --repo betterguy2004/infra-s3-test --body "argocd-server.argocd.svc.cluster.local"
+   ```
+
+3. **Important**: Do NOT include protocol (`http://` or `https://`) in the server value
+   - ✅ Correct: `argocd-server.argocd.svc.cluster.local`
+   - ✅ Correct: `localhost:8080`
+   - ❌ Wrong: `https://argocd-server.argocd.svc.cluster.local`
+
+### Issue: Conflicting flags "--plaintext" and "--insecure"
+
+**Error**: Login fails with TLS or protocol errors
+
+**Root Cause**: Using both `--plaintext` (HTTP) and `--insecure` (HTTPS with self-signed cert) together causes conflicts.
+
+**Solution**: Choose the right combination:
+
+- **For HTTPS with self-signed certificate** (most common):
+  ```bash
+  argocd login $SERVER --auth-token $TOKEN --insecure --grpc-web
+  ```
+
+- **For plain HTTP** (not recommended):
+  ```bash
+  argocd login $SERVER --auth-token $TOKEN --plaintext --grpc-web
+  ```
+
+- **For HTTPS with valid certificate**:
+  ```bash
+  argocd login $SERVER --auth-token $TOKEN --grpc-web
+  ```
+
 ### Issue: Workflow fails with "argocd login failed"
 
 **Solution**: Check if secrets are properly set:

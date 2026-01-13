@@ -107,6 +107,9 @@ spec:
       action: fetch:template
       input:
         url: ./skeleton
+        # Preserve GitHub Actions syntax - don't render workflow files
+        copyWithoutRender:
+          - .github/workflows/**
         values:
           bucketName: ${{ parameters.bucketName }}
           environment: ${{ parameters.environment }}

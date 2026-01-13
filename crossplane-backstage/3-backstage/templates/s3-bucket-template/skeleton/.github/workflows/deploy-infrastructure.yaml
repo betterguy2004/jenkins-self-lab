@@ -61,7 +61,6 @@ jobs:
           argocd login ${{ env.ARGOCD_SERVER }} \
             --auth-token ${{ env.ARGOCD_AUTH_TOKEN }} \
             --insecure \
-            --grpc-web \
             --plaintext
       
       # ------------------------------------------
