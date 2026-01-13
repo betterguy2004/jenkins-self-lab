@@ -125,7 +125,7 @@ spec:
       action: publish:github
       input:
         description: 'VPC Network: ${{ parameters.networkName }} - Created by Backstage'
-        repoUrl: github.com?owner=betterguy2004&repo=infra-vpc-${{ parameters.networkName }}
+        repoUrl: github.com?owner=manifest-crossplane-poc&repo=infra-vpc-${{ parameters.networkName }}
         defaultBranch: main
         repoVisibility: private
         sourcePath: .
@@ -134,7 +134,7 @@ spec:
       name: Trigger GitHub Actions Workflow
       action: github:actions:dispatch
       input:
-        repoUrl: github.com?owner=betterguy2004&repo=infra-vpc-${{ parameters.networkName }}
+        repoUrl: github.com?owner=manifest-crossplane-poc&repo=infra-vpc-${{ parameters.networkName }}
         workflowId: deploy-infrastructure.yaml
         branchOrTagName: main
         workflowInputs:

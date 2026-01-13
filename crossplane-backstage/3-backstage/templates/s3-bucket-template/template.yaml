@@ -127,7 +127,7 @@ spec:
       action: publish:github
       input:
         description: 'S3 Bucket: ${{ parameters.bucketName }} - Created by Backstage'
-        repoUrl: github.com?owner=betterguy2004&repo=infra-s3-${{ parameters.bucketName }}
+        repoUrl: github.com?owner=manifest-crossplane-poc&repo=infra-s3-${{ parameters.bucketName }}
         defaultBranch: main
         repoVisibility: public
         # Push rendered content to the new repo
@@ -154,7 +154,7 @@ spec:
       name: Trigger GitHub Actions Workflow
       action: github:actions:dispatch
       input:
-        repoUrl: github.com?owner=betterguy2004&repo=infra-s3-${{ parameters.bucketName }}
+        repoUrl: github.com?owner=manifest-crossplane-poc&repo=infra-s3-${{ parameters.bucketName }}
         workflowId: deploy-infrastructure.yaml
         branchOrTagName: main
         workflowInputs:

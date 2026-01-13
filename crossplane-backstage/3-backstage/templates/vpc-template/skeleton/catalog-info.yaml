@@ -8,7 +8,7 @@ metadata:
     backstage.io/kubernetes-id: vpc-${{ values.networkName }}
     backstage.io/kubernetes-namespace: default
     argocd/app-name: vpc-${{ values.networkName }}
-    github.com/project-slug: betterguy2004/infra-vpc-${{ values.networkName }}
+    github.com/project-slug: manifest-crossplane-poc/infra-vpc-${{ values.networkName }}
   labels:
     environment: ${{ values.environment }}
     resource-type: vpc-network

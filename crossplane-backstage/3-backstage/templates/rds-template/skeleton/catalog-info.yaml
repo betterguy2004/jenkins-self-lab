@@ -8,7 +8,7 @@ metadata:
     backstage.io/kubernetes-id: rds-${{ values.databaseName }}
     backstage.io/kubernetes-namespace: default
     argocd/app-name: rds-${{ values.databaseName }}
-    github.com/project-slug: betterguy2004/infra-rds-${{ values.databaseName }}
+    github.com/project-slug: manifest-crossplane-poc/infra-rds-${{ values.databaseName }}
   labels:
     environment: ${{ values.environment }}
     resource-type: rds-database
