@@ -133,6 +133,20 @@ spec:
         # Push rendered content to the new repo
         sourcePath: .
     
+    
+    # ------------------------------------------
+    # NOTE: GitHub Secrets for ArgoCD
+    # ------------------------------------------
+    # Secrets are configured at organization/repository level:
+    # - ARGOCD_SERVER: ArgoCD server URL (e.g., argocd-server.argocd.svc.cluster.local)
+    # - ARGOCD_AUTH_TOKEN: ArgoCD authentication token
+    # 
+    # Option 1: Set as Organization Secrets (recommended for multiple repos)
+    # Option 2: Use GitHub App with Backstage
+    # Option 3: Manually configure per repo
+    #
+    # For this POC, we'll use Organization Secrets that are inherited by all repos
+    
     # ------------------------------------------
     # STEP 5: github:actions:dispatch - Trigger workflow
     # ------------------------------------------
