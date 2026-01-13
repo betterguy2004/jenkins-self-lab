@@ -126,7 +126,6 @@ spec:
       name: Create GitHub Repository
       action: publish:github
       input:
-        allowedHosts: ['github.com']
         description: 'S3 Bucket: ${{ parameters.bucketName }} - Created by Backstage'
         repoUrl: github.com?owner=${{ parameters.owner | replace("group:", "") | replace("user:", "") }}&repo=infra-s3-${{ parameters.bucketName }}
         defaultBranch: main

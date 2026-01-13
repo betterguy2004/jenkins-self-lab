@@ -124,7 +124,6 @@ spec:
       name: Create GitHub Repository
       action: publish:github
       input:
-        allowedHosts: ['github.com']
         description: 'VPC Network: ${{ parameters.networkName }} - Created by Backstage'
         repoUrl: github.com?owner=${{ parameters.owner | replace("group:", "") | replace("user:", "") }}&repo=infra-vpc-${{ parameters.networkName }}
         defaultBranch: main

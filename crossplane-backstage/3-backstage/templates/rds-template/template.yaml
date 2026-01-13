@@ -141,7 +141,6 @@ spec:
       name: Create GitHub Repository
       action: publish:github
       input:
-        allowedHosts: ['github.com']
         description: 'RDS Database: ${{ parameters.databaseName }} - Created by Backstage'
         repoUrl: github.com?owner=${{ parameters.owner | replace("group:", "") | replace("user:", "") }}&repo=infra-rds-${{ parameters.databaseName }}
         defaultBranch: main
