@@ -149,7 +149,7 @@ spec:
           
           Created by Backstage template at ${{ "" | now }}
         targetPath: environments/${{ parameters.environment }}/storage
-        sourcePath: manifests
+        sourcePath: .
     
 
 
