@@ -68,6 +68,7 @@ spec:
                 transforms:
                   - type: string
                     string:
+                      type: Format
                       fmt: "%s-versioning"
               - type: FromCompositeFieldPath
                 fromFieldPath: metadata.namespace
@@ -98,6 +99,7 @@ spec:
                 transforms:
                   - type: string
                     string:
+                      type: Format
                       fmt: "%s-encryption"
               - type: FromCompositeFieldPath
                 fromFieldPath: metadata.namespace
@@ -129,6 +131,7 @@ spec:
                 transforms:
                   - type: string
                     string:
+                      type: Format
                       fmt: "%s-public-access-block"
               - type: FromCompositeFieldPath
                 fromFieldPath: metadata.namespace
