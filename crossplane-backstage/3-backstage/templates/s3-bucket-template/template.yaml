@@ -135,19 +135,18 @@ spec:
           - **Bucket Name**: `${{ parameters.bucketName }}`
           - **Environment**: `${{ parameters.environment }}`
           - **Region**: `${{ parameters.region }}`
-          - **Versioning**: ${{ parameters.versioning }}
-          - **Encryption**: ${{ parameters.encryption }}
-          - **Public Access**: ${{ parameters.publicAccess }}
+          - **Versioning**: `${{ parameters.versioning }}`
+          - **Encryption**: `${{ parameters.encryption }}`
+          - **Public Access**: `${{ parameters.publicAccess }}`
           
           ### Owner
-          ${{ parameters.owner }}
+          `${{ parameters.owner }}`
           
           ### Description
           ${{ parameters.description }}
           
           ---
-          
-          Created by Backstage template at ${{ "" | now }}
+          Created by Backstage
         targetPath: environments/${{ parameters.environment }}/storage
         sourcePath: .
     
