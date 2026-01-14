@@ -29,5 +29,5 @@ spec:
     CreatedBy: backstage
     Owner: ${{ values.owner }}
   # Crossplane machinery
-  crossplane:
-      name: s3bucket-composition
+  compositionRef:
+    name: s3bucket-composition
