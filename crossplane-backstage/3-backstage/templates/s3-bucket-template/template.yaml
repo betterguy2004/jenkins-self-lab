@@ -120,69 +120,45 @@ spec:
           timestamp: ${{ "" | now }}
     
     # ------------------------------------------
-    # STEP 4: publish:github - Create NEW repository
+    # STEP 4: Create Pull Request in GitOps Repo
     # ------------------------------------------
-    - id: publish-repo
-      name: Create GitHub Repository
-      action: publish:github
+    - id: publish-pr
+      name: Create Pull Request
+      action: publish:github:pull-request
       input:
-        description: 'S3 Bucket: ${{ parameters.bucketName }} - Created by Backstage'
-        repoUrl: github.com?owner=manifest-crossplane-poc&repo=infra-s3-${{ parameters.bucketName }}
-        defaultBranch: main
-        repoVisibility: public
-        # Push rendered content to the new repo
-        sourcePath: .
+        repoUrl: github.com?repo=gitops&owner=manifest-crossplane-poc
+        branchName: add-s3-${{ parameters.bucketName }}
+        title: 'Add S3 Bucket: ${{ parameters.bucketName }}'
+        description: |
+          ## S3 Bucket Configuration
+          
+          - **Bucket Name**: `${{ parameters.bucketName }}`
+          - **Environment**: `${{ parameters.environment }}`
+          - **Region**: `${{ parameters.region }}`
+          - **Versioning**: ${{ parameters.versioning }}
+          - **Encryption**: ${{ parameters.encryption }}
+          - **Public Access**: ${{ parameters.publicAccess }}
+          
+          ### Owner
+          ${{ parameters.owner }}
+          
+          ### Description
+          ${{ parameters.description }}
+          
+          ---
+          
+          Created by Backstage template at ${{ "" | now }}
+        targetPath: environments/${{ parameters.environment }}/storage
+        sourcePath: manifests
     
-    
-    # ------------------------------------------
-    # NOTE: GitHub Secrets for ArgoCD
-    # ------------------------------------------
-    # Secrets are configured at organization/repository level:
-    # - ARGOCD_SERVER: ArgoCD server URL (e.g., argocd-server.argocd.svc.cluster.local)
-    # - ARGOCD_AUTH_TOKEN: ArgoCD authentication token
-    # 
-    # Option 1: Set as Organization Secrets (recommended for multiple repos)
-    # Option 2: Use GitHub App with Backstage
-    # Option 3: Manually configure per repo
-    #
-    # For this POC, we'll use Organization Secrets that are inherited by all repos
-    
-    # ------------------------------------------
-    # STEP 5: github:actions:dispatch - Trigger workflow
-    # ------------------------------------------
-    - id: dispatch-workflow
-      name: Trigger GitHub Actions Workflow
-      action: github:actions:dispatch
-      input:
-        repoUrl: github.com?owner=manifest-crossplane-poc&repo=infra-s3-${{ parameters.bucketName }}
-        workflowId: deploy-infrastructure.yaml
-        branchOrTagName: main
-        workflowInputs:
-          resource_type: s3-bucket
-          resource_name: ${{ parameters.bucketName }}
-          environment: ${{ parameters.environment }}
-          region: ${{ parameters.region }}
-          argocd_app_name: s3-${{ parameters.bucketName }}
-    
-    # ------------------------------------------
-    # Register component in Backstage catalog
-    # ------------------------------------------
-    - id: register-catalog
-      name: Register in Backstage Catalog
-      action: catalog:register
-      input:
-        repoContentsUrl: ${{ steps['publish-repo'].output.repoContentsUrl }}
-        catalogInfoPath: '/catalog-info.yaml'
+
 
   # ============================================
   # OUTPUT: Links for user
   # ============================================
   output:
     links:
-      - title: View Repository
-        url: ${{ steps['publish-repo'].output.remoteUrl }}
-      - title: View GitHub Actions
-        url: ${{ steps['publish-repo'].output.remoteUrl }}/actions
-      - title: View in Backstage Catalog
-        icon: catalog
-        entityRef: ${{ steps['register-catalog'].output.entityRef }}
+      - title: View Pull Request
+        url: ${{ steps['publish-pr'].output.remoteUrl }}
+      - title: View GitOps Repository
+        url: https://github.com/manifest-crossplane-poc/gitops/tree/main/environments/${{ parameters.environment }}/storage
