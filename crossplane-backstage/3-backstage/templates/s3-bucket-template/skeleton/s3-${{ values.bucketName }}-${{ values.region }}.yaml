@@ -8,8 +8,6 @@ metadata:
   namespace: default
   labels:
     app.kubernetes.io/name: ${{ values.bucketName }}
-    app.kubernetes.io/managed-by: backstage
-    backstage.io/kubernetes-id: s3-${{ values.bucketName }}
     environment: ${{ values.environment }}
   annotations:
     description: "${{ values.description }}"
@@ -23,8 +21,6 @@ spec:
   tags:
     Name: ${{ values.bucketName }}
     Environment: ${{ values.environment }}
-    ManagedBy: crossplane
-    CreatedBy: backstage
-  # Crossplane machinery
+    ManagedBy: crossplane  # Crossplane machinery
   compositionRef:
     name: s3bucket-composition
