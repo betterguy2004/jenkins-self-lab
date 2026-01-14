@@ -12,8 +12,6 @@ metadata:
     backstage.io/kubernetes-id: s3-${{ values.bucketName }}
     environment: ${{ values.environment }}
   annotations:
-    backstage.io/owner: ${{ values.owner }} 
-    argocd.argoproj.io/sync-wave: "1"
     description: "${{ values.description }}"
 spec:
   # Crossplane v2 - flat spec structure (no nested parameters)
@@ -27,7 +25,6 @@ spec:
     Environment: ${{ values.environment }}
     ManagedBy: crossplane
     CreatedBy: backstage
-    Owner: ${{ values.owner }}
   # Crossplane machinery
   compositionRef:
     name: s3bucket-composition
