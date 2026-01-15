@@ -18,7 +18,7 @@ pipeline {
             - sleep
             - infinity
           - name: kubectl
-            image: bitnami/kubectl:latest
+            image: alpine/k8s:1.28.13
             command:
             - sleep
             - infinity
